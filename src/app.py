@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from .database import SessionLocal, engine, Base
+from database import SessionLocal, engine, Base
 from models import User, Task
 from passlib.context import CryptContext
 
@@ -10,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def get_db():
     db = SessionLocal()
@@ -27,15 +27,33 @@ def register_page(request: Request):
 def register(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == username).first():
         return templates.TemplateResponse("register.html", {"request": request, "error": "Username already exists"})
-    hashed_password = pwd_context.hash(password)
+    pw_bytes = password.encode("utf-8")
+    if len(pw_bytes) > 72:
+        truncated = pw_bytes[:72].decode("utf-8", errors="ignore")
+        try:
+            hashed_password = pwd_context.hash(truncated)
+        except ValueError as e:
+            print(f"[register] trunc_len={len(truncated.encode('utf-8'))} error: {e}")
+            return templates.TemplateResponse("register.html", {"request": request, "error": "Password processing error"})
+    else:
+        try:
+            hashed_password = pwd_context.hash(password)
+        except ValueError as e:
+            print(f"[register] pw_bytes_len={len(pw_bytes)} error: {e}")
+            return templates.TemplateResponse("register.html", {"request": request, "error": "Password processing error"})
     user = User(username=username, hashed_password=hashed_password)
     db.add(user)
     db.commit()
     return RedirectResponse(url="/login", status_code=303)
 
-@app.get("/login")
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == username.first())
+    user = db.query(User).filter(User.username == username).first()
     if not user:
         return templates.TemplateResponse("login.html", {"request": request, "error": "User not found"})
     if not pwd_context.verify(password, user.hashed_password):
@@ -86,7 +104,7 @@ def toggle_task(task_id: int, request: Request, db: Session = Depends(get_db)):
     db.commit()
     return RedirectResponse(url="/", status_code=303)
 
-@app.post("tasks/{task_id}/delete")
+@app.post("/tasks/{task_id}/delete")
 def delete_task(task_id: int, request: Request, db: Session = Depends(get_db)):
     user_id = request.cookies.get("user_id")
     if not user_id:
@@ -100,7 +118,7 @@ def delete_task(task_id: int, request: Request, db: Session = Depends(get_db)):
 
 @app.post("/tasks/{task_id}/update")
 def update_task(task_id: int, request: Request, title: str = Form(...), db: Session = Depends(get_db)):
-    user_id = request.cookies.geT("user_id")
+    user_id = request.cookies.get("user_id")
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
     
