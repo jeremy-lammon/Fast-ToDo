@@ -2,18 +2,21 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 
-from src.users.models import User
+from src.users.models import UserModel
 from src.users.repository import UserRepo
 from src.users.schemas import UserCreate, UserRead, UserUpdate
+
+# TODO: Proper custom global Error classes to abstract away FastApi's exceptions.
 
 class UserService:
     def __init__(self, repo: UserRepo) -> None:
         self.repo = repo
     
-    async def _get_or_404(self, user_id: int) -> User:
+    async def _get_or_404(self, user_id: int) -> UserModel:
         user = await self.repo.get_user_by_id(user_id)
         if user is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return user
 
     async def get_by_id(self, user_id: int) -> UserRead:
         return UserRead.model_validate(await self._get_or_404(user_id))
@@ -26,7 +29,7 @@ class UserService:
         existing = await self.repo.get_user_by_username(data.username)
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
-        user = await self.repo.create(User(username=data.username))
+        user = await self.repo.create(UserModel(username=data.username))
         return UserRead.model_validate(user)
     
     async def update_user(self, user_id: int, data: UserUpdate) -> UserRead:
@@ -39,4 +42,4 @@ class UserService:
     async def delete_user(self, user_id: int) -> None:
         await self.repo.delete(await self._get_or_404(user_id))
 
-UserSvc = Annotated[UserService, Depends(UserService)]
+UserServiceDep = Annotated[UserService, Depends(UserService)]

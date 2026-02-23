@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict
 class UserBase(BaseModel):
     username: str
 
-class UserCreate(BaseModel):
+class UserCreate(UserBase):
     pass
 
 class UserUpdate(BaseModel):
