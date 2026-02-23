@@ -1,14 +1,11 @@
 import asyncio
 from logging.config import fileConfig
 
-from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-
-load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,11 +23,9 @@ if config.config_file_name is not None:
 from src.database.base_class import Base
 from src.users.models import UserModel  # noqa: F401
 from src.tasks.models import TaskModel  # noqa: F401
+from src.config import settings
 
-import os
-SQLALCHEMY_DATABASE_URL = os.getenv('SQLALCHEMY_DATABASE_URL', 'sqlite+aiosqlite:///./fasttodo.db')
-
-config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URL)
 
 target_metadata = Base.metadata
 
