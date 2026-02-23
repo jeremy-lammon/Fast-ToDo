@@ -6,7 +6,7 @@ from src.users.models import UserModel
 from src.users.repository import UserRepo
 from src.users.schemas import UserCreate, UserRead, UserUpdate
 
-# TODO: Proper custom global Error classes to abstract away FastApi's exceptions.
+from src.exceptions import NotFoundError, ConflictError
 
 class UserService:
     def __init__(self, repo: UserRepo) -> None:
@@ -15,7 +15,7 @@ class UserService:
     async def _get_or_404(self, user_id: int) -> UserModel:
         user = await self.repo.get_user_by_id(user_id)
         if user is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise NotFoundError(resource="User", resource_id=user_id)
         return user
 
     async def get_by_id(self, user_id: int) -> UserRead:
@@ -28,7 +28,7 @@ class UserService:
     async def create_user(self, data: UserCreate) -> UserRead:
         existing = await self.repo.get_user_by_username(data.username)
         if existing:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already taken")
+            raise ConflictError(message="Username already taken", field="username")
         user = await self.repo.create(UserModel(username=data.username))
         return UserRead.model_validate(user)
     

@@ -6,7 +6,7 @@ from src.tasks.models import TaskModel
 from src.tasks.repository import TaskRepo
 from src.tasks.schemas import TaskCreate, TaskRead, TaskUpdate
 
-# TODO: Proper custom global Error classes to abstract away FastApi's exceptions.
+from src.exceptions import NotFoundError
 
 class TaskService:
     def __init__(self, repo: TaskRepo) -> None:
@@ -15,7 +15,7 @@ class TaskService:
     async def _get_or_404(self, task_id: int) -> TaskModel:
         task = await self.repo.get_task_by_id(task_id)
         if task is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+            raise NotFoundError("Task", task_id)
         return task
 
     async def get_by_id(self, task_id: int) -> TaskRead:
