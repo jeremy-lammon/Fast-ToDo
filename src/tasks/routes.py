@@ -15,12 +15,12 @@ async def create_task(user_id: int, data: TaskCreate, service: TaskServiceDep):
 
 @TaskRouter.get("/{task_id}", response_model=TaskRead)
 async def get_task(user_id: int, task_id: int, service: TaskServiceDep):
-    return await service.get_by_id(task_id)
+    return await service.get_by_id(user_id, task_id)
 
 @TaskRouter.put("/{task_id}", response_model=TaskRead)
 async def update_task(user_id: int, task_id: int, data: TaskUpdate, service: TaskServiceDep):
-    return await service.update_task(task_id, data)
+    return await service.update_task(user_id, task_id, data)
 
 @TaskRouter.delete("/{task_id}")
 async def delete_task(user_id: int, task_id: int, service: TaskServiceDep):
-    return await service.delete_task(task_id)
+    return await service.delete_task(user_id, task_id)

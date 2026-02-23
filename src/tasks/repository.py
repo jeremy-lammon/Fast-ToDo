@@ -19,6 +19,12 @@ class TaskRepository:
     async def get_task_by_id(self, task_id: int) -> TaskModel | None:
         result = await self.db.execute(select(TaskModel).where(TaskModel.id == task_id))
         return result.scalar_one_or_none()
+
+    async def get_task_by_user_and_id(self, user_id: int, task_id: int) -> TaskModel | None:
+        result = await self.db.execute(
+            select(TaskModel).where(TaskModel.id == task_id, TaskModel.user_id == user_id)
+        )
+        return result.scalar_one_or_none()
     
     async def get_tasks_by_user_id(self, user_id: int) -> list[TaskModel]:
         result = await self.db.execute(select(TaskModel).where(TaskModel.user_id == user_id))
