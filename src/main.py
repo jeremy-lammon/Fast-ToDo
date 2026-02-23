@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # must be before all src imports
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -13,8 +16,6 @@ from src.exceptions import AppError
 async def lifespan(app: FastAPI):
     # Startup
     print(f"Starting Todo App")
-    from src.database.base_class import init_db
-    await init_db()
 
     yield
     print(f"Shutting down Todo App")

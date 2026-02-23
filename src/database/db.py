@@ -1,12 +1,16 @@
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-import os
-
 from typing import Annotated
 from fastapi import Depends
+import os
 
-SQLALCHEMY_DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite+aiosqlite:///file:mem_db1?mode=memory&cache=shared&uri=true')
+
+SQLALCHEMY_DATABASE_URL = os.getenv('SQLALCHEMY_DATABASE_URL')
+print(SQLALCHEMY_DATABASE_URL)
+if SQLALCHEMY_DATABASE_URL is None:
+    print("WARNING: No Database URL env variable provided. Running new database from memory.")
+    SQLALCHEMY_DATABASE_URL = 'sqlite+aiosqlite:///file:mem_db1?mode=memory&cache=shared&uri=true'
 
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 
