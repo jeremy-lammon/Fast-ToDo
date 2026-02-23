@@ -1,11 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from src.users.routes import UserRouter
+from src.tasks.routes import TaskRouter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,4 +26,5 @@ async def health_check():
     return {"status": "healthy", "service": "Todo App"}
 
 app.include_router(UserRouter)
+app.include_router(TaskRouter)
 
