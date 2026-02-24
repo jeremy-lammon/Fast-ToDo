@@ -2,4 +2,5 @@
 
 # Next Steps:
 - Authentication Management
+- Logging
 - Testing Suite
